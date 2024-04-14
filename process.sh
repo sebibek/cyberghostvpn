@@ -1,7 +1,7 @@
 COUNTRIES="NL DE"
 # AUTH bootstrapping
 for COUNTRY in $COUNTRIES; do
-	rm -rf tokens/
+	rm -rf tokens/ # we need to reauthenticate for each concurrent connection
 	docker run \
 	--name='cyberghostvpn' \
 	--privileged=true \
@@ -13,6 +13,7 @@ for COUNTRY in $COUNTRIES; do
 	-d $(echo $(docker image ls --format json|head -n1|jq -r .ID))
 	
 	sleep 30 # wait for container to connect
+	# bootstrap wireguard config
 	mkdir $COUNTRY
 	cp ./tokens/wg0.conf ./$COUNTRY/wg0.conf
 	docker rm -f cyberghostvpn
@@ -21,6 +22,7 @@ done
 # wg0.conf post-processing
 for conf in */wg0.conf; do
     echo INPUT && cat $conf
+
 	endpoint=$(grep "Endpoint" $conf | cut -d "=" -f2)
 	host=$(echo $endpoint | cut -d ":" -f1)
 	port=$(echo $endpoint | cut -d ":" -f2)
@@ -32,7 +34,7 @@ done
 
 # run gluetun instances since they are more stable and can scale better
 i=0 for COUNTRY in $COUNTRIES; do
-	docker run -it --rm -e HTTPPROXY=on -p $((8000+$i)):8888 --cap-add=NET_ADMIN \
+	docker run -d --rm -e HTTPPROXY=on -p $((8000+$i)):8888 --cap-add=NET_ADMIN \
 	-e VPN_SERVICE_PROVIDER=custom -e VPN_TYPE=wireguard \
 	-v ./$COUNTRY:/gluetun/wireguard \
 	qmcgaw/gluetun
