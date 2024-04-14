@@ -101,6 +101,13 @@
 			#Launch and connect to CyberGhost VPN
 			sudo cyberghostvpn --connect --country-code "$COUNTRY" --"$PROTOCOL" "$ARGS"
 			
+			echo "CyberGhost VPN is connected..."
+			WIREGUARD_CFG=/home/root/.cyberghost/$COUNTRY/wg0.conf
+
+			cat /etc/wireguard/cyberghost.conf <(echo -e '\n')
+			mkdir /home/root/.cyberghost/$COUNTRY
+			sudo cp /etc/wireguard/cyberghost.conf $WIREGUARD_CFG
+			
 			# Add CyberGhost nameserver to resolv for DNS
 			# Add Nameserver via env variable $NAMESERVER
 			if [ -n "$NAMESERVER" ]; then
