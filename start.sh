@@ -104,6 +104,7 @@
 			echo "CyberGhost VPN is connected..."
 			WIREGUARD_CFG=/home/root/.cyberghost/wg0.conf
 
+			sleep 5
 			cat /etc/wireguard/cyberghost.conf <(echo -e '\n')
 			sudo cp /etc/wireguard/cyberghost.conf $WIREGUARD_CFG
 

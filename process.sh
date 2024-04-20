@@ -1,3 +1,5 @@
+# requirements: docker installed and running, vm connectable/ip assigned
+
 COUNTRIES="NL DE"
 # AUTH bootstrapping
 for COUNTRY in $COUNTRIES; do
@@ -22,6 +24,7 @@ done
 # wg0.conf post-processing
 for conf in */wg0.conf; do
     echo INPUT && cat $conf
+	cp $conf $conf.ini # backup
 
 	endpoint=$(grep "Endpoint" $conf | cut -d "=" -f2)
 	host=$(echo $endpoint | cut -d ":" -f1)
@@ -33,8 +36,8 @@ for conf in */wg0.conf; do
 done
 
 # run gluetun instances since they are more stable and can scale better
-i=0 for COUNTRY in $COUNTRIES; do
-	docker run -d --rm -e HTTPPROXY=on -p $((8000+$i)):8888 --cap-add=NET_ADMIN \
+i=0; for COUNTRY in $COUNTRIES; do
+	docker run -d -e HTTPPROXY=on -p $((8000+$i)):8888 --cap-add=NET_ADMIN \
 	-e VPN_SERVICE_PROVIDER=custom -e VPN_TYPE=wireguard \
 	-v ./$COUNTRY:/gluetun/wireguard \
 	qmcgaw/gluetun
