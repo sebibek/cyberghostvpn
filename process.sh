@@ -1,11 +1,14 @@
 # requirements: docker installed and running, vm connectable/ip assigned
-# COUNTRIES="DE NL"
-# PASS="<PASSWORD>"
-# ./process.sh
 
-# AUTH bootstrapping
-for COUNTRY in $COUNTRIES; do
-	rm -rf tokens/ # we need to reauthenticate for each concurrent connection
+# USAGE
+
+# export COUNTRIES="DE NL"
+# PASS="<PASSWORD>"
+# source process.sh
+
+# AUTH bootstrapping using forked https://github.com/tmcphee/cyberghostvpn
+for COUNTRY in $(echo $COUNTRIES|xargs); do
+	rm -rf tokens/ # we need to reauthenticate for each concurrent (VPN) connection
 	docker run \
 		--name='cyberghostvpn' \
 		--privileged=true \
@@ -14,7 +17,7 @@ for COUNTRY in $COUNTRIES; do
 		-e 'PASS'="$PASS" \
 		-e 'COUNTRY'="$COUNTRY" \
 		-v './tokens':'/home/root/.cyberghost:rw' \
-		-d $(echo $(docker image ls --format json|head -n1|jq -r .ID))
+		-d zebswag/cyberghostvpn-debug
 	
 	sleep 30 # wait for container to connect
 	# bootstrap wireguard config
@@ -23,15 +26,17 @@ for COUNTRY in $COUNTRIES; do
 	docker rm -f cyberghostvpn
 done
 
-source resolve.sh
+# real wireguard needs addr range and resolved IP to connect
+source resolve.sh # wg0.conf.ini -> wg0.conf
 
-# run gluetun instances since they are more stable and can scale better
-i=0; for COUNTRY in $COUNTRIES; do
-	docker run -d -e HTTPPROXY=on -p $((8000+$i)):8888 --cap-add=NET_ADMIN \
+# run gluetun instances by mounting wg0.conf(s) since they are more stable and can scale better (req. 300MB/instance)
+i=0; for COUNTRY in $(echo $COUNTRIES|xargs); do
+	docker run -d -e HTTPPROXY=on -p $((8000+$i)):8888 --cap-add=NET_ADMIN --restart=always \
 		-e VPN_SERVICE_PROVIDER=custom -e VPN_TYPE=wireguard \
 		-v ./$COUNTRY:/gluetun/wireguard \
-		qmcgaw/gluetun
+		qmcgaw/gluetun # always makes them reconnect on startup
+
 	((i++))
 done
 
-# proxies will be available on localhost: 8000, 8001, 8002, etc.
+# local proxies will be available on localhost: 8000, 8001, 8002, etc.

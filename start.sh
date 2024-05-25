@@ -105,7 +105,7 @@
 			WIREGUARD_CFG=/home/root/.cyberghost/wg0.conf
 
 			sleep 5
-			cat /etc/wireguard/cyberghost.conf <(echo -e '\n')
+			cat /etc/wireguard/cyberghost.conf && echo
 			sudo cp /etc/wireguard/cyberghost.conf $WIREGUARD_CFG
 
 			# Add CyberGhost nameserver to resolv for DNS
