@@ -9,6 +9,7 @@
 # AUTH bootstrapping using forked https://github.com/tmcphee/cyberghostvpn
 for COUNTRY in $(echo $COUNTRIES|xargs); do
 	rm -rf tokens/ # we need to reauthenticate for each concurrent (VPN) connection
+	docker rm -f cyberghostvpn
 	docker run \
 		--name='cyberghostvpn' \
 		--privileged=true \
@@ -17,13 +18,12 @@ for COUNTRY in $(echo $COUNTRIES|xargs); do
 		-e 'PASS'="$PASS" \
 		-e 'COUNTRY'="$COUNTRY" \
 		-v './tokens':'/home/root/.cyberghost:rw' \
-		-d zebswag/cyberghostvpn-debug
+		-d zebswag/cyberghostvpn-debug:latest
 	
-	sleep 30 # wait for container to connect
+	sleep 300 # wait for container to connect
 	# bootstrap wireguard config
 	mkdir $COUNTRY
 	cp ./tokens/wg0.conf ./$COUNTRY/wg0.conf.ini # wg config template
-	docker rm -f cyberghostvpn
 done
 
 # real wireguard needs addr range and resolved IP to connect

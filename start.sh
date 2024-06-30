@@ -99,7 +99,7 @@
 			fi
 				
 			#Launch and connect to CyberGhost VPN
-			sudo cyberghostvpn --connect --country-code "$COUNTRY" --"$PROTOCOL" "$ARGS"
+			sudo cyberghostvpn --connect --torrent --country-code "$COUNTRY" --"$PROTOCOL" "$ARGS"
 			
 			echo "CyberGhost VPN is connected..."
 			WIREGUARD_CFG=/home/root/.cyberghost/wg0.conf
